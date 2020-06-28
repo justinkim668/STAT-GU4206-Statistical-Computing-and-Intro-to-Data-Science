@@ -1,0 +1,152 @@
+---
+title: "Homework 2 (50 Points)"
+author: "Justin Kim jtk2141"
+date: "October 4, 2019"
+output: pdf_document
+---
+
+# Instructions 
+Make sure that you upload an RMarkdown file to the canvas page (this should have a .Rmd extension) as well as the PDF or HTML output after you have knitted the file (this will have a .pdf or .html extension).  Note that since you have already knitted this file, you should see both a **HW2.pdf** and a **HW2.Rmd** file in your GU4206/GR5206 folder.  Click on the **Files** tab to the right to see this.  The files you upload to the Canvas page should be updated with commands you provide to answer each of the questions below.  You can edit this file directly to produce your final solutions.  HW 2 is due 11:59 pm on Friday, October 11th.    
+
+# Part 1 (Iris)  
+## Background
+
+The R data description follows:
+
+This famous (Fisher's or Anderson's) iris data set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa, versicolor, and virginica.
+
+# Task
+
+1) Using `ggplot`, as apposed to `Base R,` produce the same plot constructed by the following code. That is, plot **Petal Length** versus **Sepal Length** split by **Species**.  The colors of the points should be split according to **Species**.  Also overlay three regression lines on the plot, one for each **Species** level.  Make sure to include an appropriate legend and labels to the plot.   Note: The function **coef()** extracts the intercept and the slope of an estimated line.      
+
+```{r}
+# Base plot
+plot(iris$Sepal.Length,iris$Petal.Length,col=iris$Species,xlab="Sepal",ylab="Petal",main="Gabriel's Plot")
+
+# loop to construct each LOBF
+for (i in 1:length(levels(iris$Species))) {
+  extract <- iris$Species==levels(iris$Species)[i]
+  abline(lm(iris$Petal.Length[extract]~iris$Sepal.Length[extract]),col=i)
+  }
+
+# Legend
+legend("right",legend=levels(iris$Species),fill = 1:length(levels(iris$Species)), cex = .75)
+
+# Add points and text
+points(iris$Sepal.Length[15],iris$Petal.Length[15],  pch = "*", col = "black")
+text(iris$Sepal.Length[15]+.4,iris$Petal.Length[15],"(5.8,1.2)",col="black")
+points(iris$Sepal.Length[99],iris$Petal.Length[99],  pch = "*", col = "red")
+text(iris$Sepal.Length[99]+.35,iris$Petal.Length[99],"(5.1,3)",col = "red")
+points(iris$Sepal.Length[107],iris$Petal.Length[107],pch = "*", col = "green")
+text(iris$Sepal.Length[107],iris$Petal.Length[107]+.35,"(4.9,4.5)",col = "green")
+```
+
+**Solution goes below:**
+```{r}
+library(ggplot2)
+ggplot(data = iris)+
+  geom_point(mapping = aes(x=Sepal.Length, y = Petal.Length, color = Species))+
+  geom_smooth(mapping = aes(x=Sepal.Length, y = Petal.Length, color = Species), method = "lm", fullrange = TRUE, se = FALSE)
+  
+```
+
+
+# Part 2 (World's Richest)
+# Background
+
+We consider a data set containing information about the world's richest people. The data set us taken form the World Top Incomes Database (WTID) hosted by the Paris School of Economics [http://top-incomes.g-mond.parisschoolofeconomics.eu]. This is derived from income tax reports, and compiles information about the very highest incomes in various countries over time, trying as hard as possible to produce numbers that are comparable across time and space.
+
+# Tasks 
+
+2) Open the file and make a new variable (dataframe) containing only the year, "P99", "P99.5" and "P99.9" variables; these are the income levels which put someone at the 99th, 99.5th, and 99.9th, percentile of income. What was P99 in 1993? P99.5 in 1942?
+You must identify these using your code rather than looking up the values manually. The code for this part is given below. 
+
+**Solution goes below:**
+```{r}
+wtid <- read.csv("wtid-report.csv", as.is = TRUE)
+wtid <- wtid[, c("Year", "P99.income.threshold","P99.5.income.threshold", "P99.9.income.threshold")]
+names(wtid) <- c("Year", "P99", "P99.5", "P99.9")
+wtid$P99[ wtid$Year == 1993]
+wtid$P99.5[wtid$Year == 1942]
+```
+
+3) Using `ggplot`, display three line plots on the same graph showing the income threshold amount against time for each group, P99, P99.5 and P99.9. Make sure the axes are labeled appropriately, and in particular that the horizontal axis is labeled with years between 1913 and 2012, not just numbers from 1 to 100. Also make sure a legend is displayed that describes the multiple time series plot.  Write one or two sentences describing how income inequality has changed throughout time.  
+
+**Solution goes below:**
+```{r}
+n<-length(wtid$Year)
+wtid.new <- data.frame(Year = rep(wtid$Year,3),
+                       IncomeLevels = c(wtid$P99,
+                                        wtid$P99.5,
+                                        wtid$P99.9),
+                       Percentile = c(rep("P99",n),
+                                      rep("P99.5",n),
+                                      rep("P99.9",n))
+                       )
+ggplot(data = wtid.new)+
+  geom_line(mapping = aes(x = Year, y = IncomeLevels,
+                          color=Percentile))+
+  labs(title = "Thresholds for the Richest People", 
+       x = "Year", y = "Threshold Amount",
+       color = "Percentile")
+
+```
+
+# Part 3 (Titanic)
+
+# Background
+
+In this part we'll be studying a data set which provides information on the survival rates of passengers on the fatal voyage of the ocean liner \emph{Titanic}.  The dataset provides information on each passenger including, for example, economic status, sex, age, cabin, name, and survival status.  This is a training dataset taken from the Kaggle competition website; for more information on Kaggle competitions, please refer to \url{https://www.kaggle.com}.  Students should download the data set on Canvas.   
+
+
+# Tasks 
+
+4) Run the following code and describe what the two plots are producing
+The two plots are presenting the same infomation in different ways.  The initial graph combines the counts for dead/alive by gender, which allows us to see which proportion of each gender survived/died.  The 2nd graph groups the death/survival counts by gender, but the death/survival counts each get their own bar, which allows for a more effective comparison of absolute counts.
+```{r}
+# Read in data
+titanic <- read.table("Titanic.txt", header = TRUE, as.is = TRUE)
+head(titanic)
+library(ggplot2)
+# Plot 1
+ggplot(data=titanic) +
+   geom_bar(aes(x=Sex,fill=factor(Survived)))+
+   labs(title = "Title",fill="Survived")
+
+# plot 2
+ ggplot(data=titanic) +
+   geom_bar(aes(x=factor(Survived),fill=factor(Survived)))+
+   facet_grid(~Sex)+
+   labs(title = "Title",fill="Survived",x="")
+```
+
+5) Create a similar plot with the variable **Pclass**.  The easiest way to produce this plot is to **facet** by **Pclass**.  Make sure to include appropriate labels and titles.  Describe your  
+The two plots are presenting the same infomation in different ways.  The initial graph combines the counts for dead/alive by passenger class, which allows us to see which proportion of each passenger survived/died.  The 2nd graph groups the death/survival counts by passenger class, but the death/survival counts each get their own bar, which allows for a more effective comparison of absolute counts.  Based on the graphs it seems like passengers in the 3rd class were the most likely to die.
+**Solution goes below:**
+```{r}
+titanic <- read.table("Titanic.txt", header = TRUE, as.is = TRUE)
+head(titanic)
+library(ggplot2)
+# Plot 1
+ggplot(data=titanic) +
+   geom_bar(aes(x=Pclass,fill=factor(Survived)))+
+   labs(title = "Pclass vs Survival",fill="Survived")
+
+# plot 2
+ ggplot(data=titanic) +
+   geom_bar(aes(x=factor(Survived),fill=factor(Survived)))+
+   facet_grid(~Pclass)+
+   labs(title = "Pclass vs Survival",fill="Survived",x="Pclass")
+```
+
+
+6)  Create one more plot of your choice related to the **titanic** data set.  Describe what information your plot is conveying.      
+This graph shows the gender ratios for people who departed from different ports.  Something interesting to note is that there are a few women who did not indicate their port of departure. Hmm I wonder why. 
+**Solution goes below:**
+```{r}
+ggplot(data=titanic) +
+   geom_bar(aes(x=Embarked,fill=factor(Sex)))+
+   labs(title = "Embarked vs Sex",fill="Sex")
+```
+
+

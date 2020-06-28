@@ -1,0 +1,138 @@
+---
+title: "Homework 3 (50 Points)"
+author: "Justin Kim jtk2141"
+date: "October 28, 2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Instructions 
+Make sure that you upload an RMarkdown file to the canvas page (this should have a .Rmd extension) as well as the PDF or HTML output after you have knitted the file (this will have a .pdf or .html extension).  Note that since you have already knitted this file, you should see both a **HW2.pdf** and a **HW2.Rmd** file in your GU4206/GR5206 folder.  Click on the **Files** tab to the right to see this.  The files you upload to the Canvas page should be updated with commands you provide to answer each of the questions below.  You can edit this file directly to produce your final solutions.  HW 2 is due 11:59 pm on Friday, October 11th.    
+
+Goals: regular expressions, character functions in R, and web scraping.
+In this assignment, we’re going to scrape the 2019-2020 Brooklyn Nets Regular Season Schedule
+(they’re a basketball team from Brooklyn that plays in the NBA). We will take the regular season
+schedule from http://www.espn.com/ and reassemble the game listings in an R data frame for
+computational use
+
+
+# Task
+To do this, perform the following tasks:
+
+i. Open the link https://www.espn.com/nba/team/schedule/_/name/bkn/season/2020/seasontype/2. Display the source code and copy and paste this code into a text editor. Then save the
+file as NetsSchedule1920 using a .html extension. Once the file is saved, check that you can
+open the file and it displays the 2018-2019 Brooklyn Nets Regular Season Schedule. If this
+does not work and you are unable to open the file up, do not worry and skip to
+problem ii.      
+
+```{r}
+#N/A
+```
+
+ii. Use the readLines() command we studied in class to load the NetsSchedule1920.html file
+into a character vector in R. Call the vector nets1920. Note: You can also skip Part i all
+together and use the readLines() command on the url https://www.espn.com/nba/team/
+schedule/_/name/bkn/season/2020/seasontype/2, which is arguably easier.
+
+a. How many lines are in the NetsSchedule1920.html file?
+74 Lines
+```{r}
+nets1920 <- readLines("https://www.espn.com/nba/team/schedule/_/name/bkn/season/2020/seasontype/2")
+length(nets1920)
+  
+```
+
+b. What is the total number of characters in the file?
+429348 characters
+```{r}
+nchar(toString(nets1920))
+```
+
+c. What is the maximum number of characters in a single line of the file?
+271972
+```{r}
+nets1920text<-nchar(nets1920)
+max(nets1920text)
+```
+Using NetsSchedule1920.html we’d like to extract the following variables: the date, the game
+time (ET), the opponent, and whether the game is home or away. Looking at the file in the text
+editor, locate each of these variables. For the next part of the homework we use regular expressions
+to extract this information.
+
+iii. Write a regular expression that will capture the date of the game. Then using the grep()
+function find the lines in the file that correspond to the games.
+
+iv. Using the expression you wrote in (iii) along with the functions gregexpr() and regmatches(),
+extract the dates from the text file. Store this information in a vector called date to save to
+1 use below. Display the first six dates of the extracted dates vector. Hint: We did something
+like this in class.
+
+**Solution goes below:**
+
+```{r}
+num_exp1 <- "[A-Z][a-z]{2}[,][[:space:]][A-Z][a-z]{2}[[:space:]][0-9]+"
+num_index1 <-grepl(nets1920, pattern=num_exp1)
+gamedates <-gregexpr(pattern=num_exp1, nets1920[num_index1])
+dates <-regmatches(nets1920[num_index1], gamedates)
+gamedate<-c(unlist(dates))
+
+```
+
+Use the same strategy as in (iii) and (iv) to create a time vector that stores the time of the
+game. Notice that the length of this vector might be shorter because it only captures the
+games for the remainder of the season and the season is more than half over. Display the
+first six times of the extracted time vector.
+
+```{r}
+num_exp2 <- "[0-9]{1,2}[:][0-9]{2}[[:space:]][PM]{2}"
+num_index2 <-grep(nets1920, pattern=num_exp2)
+gametimes <-gregexpr(pattern=num_exp2, nets1920[num_index2])
+times <-regmatches(nets1920[num_index2], gametimes)[1]
+gametime<-c(unlist(times))
+
+head(gametime[1:6])
+
+times
+```
+
+vi. We would now like to gather information about whether the game is home or away. This
+information is indicated in the schedule by either an ‘@’ or a ‘vs’ in front of the opponent.
+If the Nets are playing ‘@’ their opponent’s court, the game is away. If the Nets are playing
+‘vs’ the opponent, the game is at home.
+Capture this information using a regular expression. You may want to use the HTML code
+around these values to guide your search. Then extract this information and use it to create
+a vector called home which takes the value 1 if the game is played at home or 0 if it is away.
+Display the first six values of the home vector.
+
+**Solution goes below:**
+```{r}
+num_exp3 <- "(<span class=\"pr2\">[vs |@]{1,2}</span>)"
+num_index3 <-grepl(nets1920, pattern=num_exp3)
+home <-gregexpr(pattern=num_exp3, nets1920[num_index3])
+h <-regmatches(nets1920[num_index3], home)
+homes <-c(unlist(h))
+home <- ifelse(homes == "<span class=\"pr2\">vs</span>",1,0)
+head(home[1:6])
+
+```
+
+vii. Finally we would like to find the opponent, again capture this information using a regular
+expression. Extract these values and save them to a vector called opponent. Again, to write
+your regular expression you may want to use the HTML code around the names to guide
+your search.
+
+```{r}
+num_exp3 <- "(<span class=\"pr2\">[vs |@]{1,2}</span>)"
+num_index3 <-grepl(nets1920, pattern=num_exp3)
+home <-gregexpr(pattern=num_exp3, nets1920[num_index3])
+h <-regmatches(nets1920[num_index3], home)
+homes <-c(unlist(h))
+home <- ifelse(homes == "<span class=\"pr2\">vs</span>",1,0)
+head(home[1:6])
+
+```
+
+
+
+
